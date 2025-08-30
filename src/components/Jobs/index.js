@@ -11,42 +11,27 @@ import Profile from '../Profile'
 import './index.css'
 
 const employmentTypesList = [
-  {
-    label: 'Full Time',
-    employmentTypeId: 'FULLTIME',
-  },
-  {
-    label: 'Part Time',
-    employmentTypeId: 'PARTTIME',
-  },
-  {
-    label: 'Freelance',
-    employmentTypeId: 'FREELANCE',
-  },
-  {
-    label: 'Internship',
-    employmentTypeId: 'INTERNSHIP',
-  },
+  {label: 'Full Time', employmentTypeId: 'FULLTIME'},
+  {label: 'Part Time', employmentTypeId: 'PARTTIME'},
+  {label: 'Freelance', employmentTypeId: 'FREELANCE'},
+  {label: 'Internship', employmentTypeId: 'INTERNSHIP'},
 ]
 
 const salaryRangesList = [
-  {
-    salaryRangeId: '1000000',
-    label: '10 LPA and above',
-  },
-  {
-    salaryRangeId: '2000000',
-    label: '20 LPA and above',
-  },
-  {
-    salaryRangeId: '3000000',
-    label: '30 LPA and above',
-  },
-  {
-    salaryRangeId: '4000000',
-    label: '40 LPA and above',
-  },
+  {salaryRangeId: '1000000', label: '10 LPA and above'},
+  {salaryRangeId: '2000000', label: '20 LPA and above'},
+  {salaryRangeId: '3000000', label: '30 LPA and above'},
+  {salaryRangeId: '4000000', label: '40 LPA and above'},
 ]
+
+const locationTypeList = [
+  {locationId: 'Hyderabad', label: 'Hyderabad'},
+  {locationId: 'Bangalore', label: 'Bangalore'},
+  {locationId: 'Chennai', label: 'Chennai'},
+  {locationId: 'Delhi', label: 'Delhi'},
+  {locationId: 'Mumbai', label: 'Mumbai'},
+]
+
 const apiStatusConstants = {
   initial: 'INITIAL',
   success: 'SUCCESS',
@@ -56,10 +41,12 @@ const apiStatusConstants = {
 
 class Jobs extends Component {
   state = {
+    allJobs: [], // master list
+    employmentList: [], // filtered list
     employmentType: [],
     salaryRange: salaryRangesList[0].salaryRangeId,
     searchInput: '',
-    employmentList: '',
+    locationType: [], // ✅ store selected locations
     apiStatus: apiStatusConstants.initial,
   }
 
@@ -68,24 +55,21 @@ class Jobs extends Component {
   }
 
   getEmploymentData = async () => {
-    console.log('function reached')
     this.setState({apiStatus: apiStatusConstants.inProgress})
+    console.log('reached lcm')
     const {employmentType, salaryRange, searchInput} = this.state
     const queryParameter = `?employment_type=${employmentType.join()}&minimum_package=${salaryRange}&search=${searchInput}`
     const apiUrl = `https://apis.ccbp.in/jobs${queryParameter}`
     const jwtToken = Cookies.get('jwt_token')
-    console.log(jwtToken)
+
     const options = {
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-      },
+      headers: {Authorization: `Bearer ${jwtToken}`},
       method: 'GET',
     }
+
     const response = await fetch(apiUrl, options)
-    console.log(response)
     if (response.ok === true) {
       const fetchedData = await response.json()
-      console.log(fetchedData)
       const updatedData = fetchedData.jobs.map(eachJob => ({
         companyLogoUrl: eachJob.company_logo_url,
         employmentType: eachJob.employment_type,
@@ -97,13 +81,27 @@ class Jobs extends Component {
         title: eachJob.title,
       }))
       console.log(updatedData)
-      this.setState({
-        employmentList: updatedData,
-        apiStatus: apiStatusConstants.success,
-      })
+
+      this.setState(
+        {allJobs: updatedData, apiStatus: apiStatusConstants.success},
+        this.applyFilters, // ✅ immediately apply filters after fetching
+      )
     } else {
       this.setState({apiStatus: apiStatusConstants.failure})
     }
+  }
+
+  // ✅ single function to apply all filters
+  applyFilters = () => {
+    const {allJobs, employmentType, salaryRange, locationType} = this.state
+    console.log(employmentType)
+    let filtered = allJobs
+
+    if (locationType.length > 0) {
+      filtered = filtered.filter(job => locationType.includes(job.location))
+    }
+
+    this.setState({employmentList: filtered})
   }
 
   onClickIconButton = () => {
@@ -114,12 +112,18 @@ class Jobs extends Component {
     this.setState({searchInput: event.target.value})
   }
 
-  onChangeEmploymetType = type => {
-    this.setState({employmentType: type}, this.getEmploymentData)
+  onChangeEmploymetType = selectedTypes => {
+    console.log(selectedTypes, 'reached')
+    this.setState({employmentType: selectedTypes}, this.getEmploymentData)
   }
 
   onChangeSalaryRange = salaryRange => {
     this.setState({salaryRange}, this.getEmploymentData)
+  }
+
+  // ✅ new fixed function
+  onChangeLocationType = locationList => {
+    this.setState({locationType: locationList}, this.applyFilters)
   }
 
   renderLoadingView = () => (
@@ -151,9 +155,9 @@ class Jobs extends Component {
 
   renderJobsListView = () => {
     const {employmentList} = this.state
-    const shouldShowProductsList = employmentList.length > 0
+    const shouldShowJobs = employmentList.length > 0
 
-    return shouldShowProductsList ? (
+    return shouldShowJobs ? (
       <div className="employment-container">
         <ul className="employment-list">
           {employmentList.map(eachEmployment => (
@@ -177,7 +181,6 @@ class Jobs extends Component {
   }
 
   renderEmployment = () => {
-    console.log('hi')
     const {apiStatus} = this.state
 
     switch (apiStatus) {
@@ -193,8 +196,7 @@ class Jobs extends Component {
   }
 
   render() {
-    const {searchInput, employmentType} = this.state
-    console.log(employmentType)
+    const {searchInput} = this.state
     return (
       <>
         <Header />
@@ -206,6 +208,8 @@ class Jobs extends Component {
               salaryRangesList={salaryRangesList}
               onChangeEmploymetType={this.onChangeEmploymetType}
               onChangeSalaryRange={this.onChangeSalaryRange}
+              locationTypeList={locationTypeList}
+              onChangeLocation={this.onChangeLocationType}
             />
           </div>
           <div className="search-jobs-container">
@@ -226,7 +230,6 @@ class Jobs extends Component {
                 <BsSearch size="20" color="#cbd5e1" />
               </button>
             </div>
-            {console.log('hello')}
             {this.renderEmployment()}
           </div>
         </div>

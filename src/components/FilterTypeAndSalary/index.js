@@ -1,6 +1,7 @@
 import './index.css'
 
 const typeList = []
+const locationList = []
 
 const FilterTypeAndSalary = props => {
   const {
@@ -8,6 +9,8 @@ const FilterTypeAndSalary = props => {
     salaryRangesList,
     onChangeEmploymetType,
     onChangeSalaryRange,
+    locationTypeList,
+    onChangeLocation,
   } = props
 
   const onChangeEmploymetTypeFunction = event => {
@@ -16,17 +19,25 @@ const FilterTypeAndSalary = props => {
       onChangeEmploymetType(typeList)
     } else {
       const index = typeList.indexOf(event.target.value)
-
       typeList.splice(index, 1)
-
       onChangeEmploymetType(typeList)
     }
-    console.log(typeList)
   }
-  console.log(typeList)
+
   const onChangeSalaryRangeFunction = event => {
     if (event.target.checked === true) {
       onChangeSalaryRange(event.target.value)
+    }
+  }
+
+  const onChangeLocationList = event => {
+    if (event.target.checked === true) {
+      locationList.push(event.target.value)
+      onChangeLocation(locationList)
+    } else {
+      const index = locationList.indexOf(event.target.value)
+      locationList.splice(index, 1)
+      onChangeLocation(locationList)
     }
   }
 
@@ -65,6 +76,24 @@ const FilterTypeAndSalary = props => {
             />
             <label className="input-label" htmlFor={eachSalary.salaryRangeId}>
               {eachSalary.label}
+            </label>
+          </li>
+        ))}
+      </ul>
+      <hr className="seperator" />
+      <h1 className="sub-heading">Location</h1>
+      <ul className="type-list">
+        {locationTypeList.map(eachLocation => (
+          <li className="list-item" key={eachLocation.locationId}>
+            <input
+              className="checkbox-input"
+              id={eachLocation.locationId}
+              type="checkbox"
+              value={eachLocation.label}
+              onChange={onChangeLocationList}
+            />
+            <label className="input-label" htmlFor={eachLocation.locationId}>
+              {eachLocation.label}
             </label>
           </li>
         ))}

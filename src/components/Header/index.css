@@ -1,6 +1,7 @@
 .header-container {
   width: 100%;
-  height: 51px;
+  height: 10vh;
+  margin: 0px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -9,6 +10,10 @@
   padding-top: 10px;
   padding-bottom: 10px;
   background-color: #7e858e;
+  
+  position: sticky;  /* makes it stick */
+  top: 0;            /* stick to the very top */
+  z-index: 1000;     /* ensures it stays above other content */
 }
 .logo {
   height: 30px;
